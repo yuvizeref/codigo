@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -12,10 +13,10 @@ import (
 var DB *mongo.Database
 
 func InitMongoDB() error {
-	mongoURI := os.Getenv("MONGO_URI")
-	mongoDB := os.Getenv("MONGO_DB")
 
-	clientOptions := options.Client().ApplyURI(mongoURI + "/" + mongoDB)
+	mongoURL := os.Getenv("MONGO_URL")
+
+	clientOptions := options.Client().ApplyURI(mongoURL)
 
 	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
@@ -27,8 +28,16 @@ func InitMongoDB() error {
 		return err
 	}
 
-	DB = client.Database(mongoDB)
+	DB = client.Database(getDatabaseName(mongoURL))
 
 	log.Println("Successfully connected to MongoDB!")
 	return nil
+}
+
+func getDatabaseName(mongoURL string) string {
+	parts := strings.Split(mongoURL, "/")
+	if len(parts) > 1 {
+		return parts[len(parts)-1]
+	}
+	return "codigo"
 }
